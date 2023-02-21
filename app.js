@@ -14,7 +14,7 @@ readdirSync("./routes").map(async (routeFile) => {
   app.use("/api/v1", await require(`./routes/${routeFile}`));
 });
 
-app.use("/", (req, res) => {
+app.get("/", (req, res) => {
   res.status(200).json({
     status: "Active",
   });
