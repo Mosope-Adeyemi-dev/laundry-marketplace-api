@@ -6,9 +6,10 @@ exports.responseHandler = (
   success = false,
   data = null
 ) => {
-  res.status(statusCode).json({
+  const response = {
     success,
     message,
-    data,
-  });
+  }
+  data != null ? response.data = data : ''
+  res.status(statusCode).json(response);
 };

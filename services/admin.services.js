@@ -4,6 +4,7 @@ const { translateError } = require('../utils/mongo_helper')
 const generateOtp = require('../utils/otp')
 const { createToken } = require('../utils/token')
 const moment = require("moment")
+const merchantModel = require('../models/merchant.model')
 
 const createAdmin = async (newAdmin) => {
     try {
@@ -49,7 +50,7 @@ const inviteNewAdmin = async (email, role, id) => {
     }
 }
 
-const autheniticateAdmin = async (password, email) => {
+const authenticateAdmin = async (password, email) => {
     try {
         const user = await adminModel.findOne({email}).select("email firstname lastname role password")
 
@@ -72,7 +73,7 @@ const autheniticateAdmin = async (password, email) => {
     }
 }
 
-const updateIvitedAdmin = async (firstname,lastname, email, password, token) => {
+const updateInvitedAdmin = async (firstname,lastname, email, password, token) => {
     try {
         const foundAdmin = await adminModel.findOne({email})
         console.log(foundAdmin)
@@ -100,13 +101,36 @@ const retrieveAllAdmins = async () => {
         console.log(error)
         return [false, translateError(error) || 'Unable to retrieve system admins.']
     }
+}
 
+const getAllMerchants = async () => {
+    try {
+        const merchants = await merchantModel.find().select("fullName email isActive storeAddress businessName phoneNumber isApproved")
+        return [true, merchants]
+    } catch (error) {
+        console.log(error)
+        return [false, translateError(error) || 'Unable to retrieve merchants.']
+    }
+}
+
+const changeMerchantStatus = async (merchantId, isActive) => {
+    try {
+        const merchant = await merchantModel.findByIdAndUpdate(merchantId, { isActive }, { new: true})
+        console.log(merchant)
+        if(!merchant) return [false, "Unable to update merchant status"]
+        return [true, merchant]
+    } catch (error) {
+        console.log(error)
+        return [false, translateError(error) || 'Unable to update merchant status.']
+    }
 }
 
 module.exports = {
     createAdmin,
     inviteNewAdmin,
-    autheniticateAdmin,
-    updateIvitedAdmin,
-    retrieveAllAdmins
+    authenticateAdmin, 
+    updateInvitedAdmin,
+    retrieveAllAdmins,
+    getAllMerchants,
+    changeMerchantStatus
 }

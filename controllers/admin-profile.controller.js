@@ -8,7 +8,7 @@ const getAllAdmins = async (req, res) => {
 
         if(check[0] == false) return responseHandler(res, check[1], 400, false)
 
-        return responseHandler(res, "Admins retrieved succesfully", 200, true, check[1])
+        return responseHandler(res, "Admins retrieved successfully", 200, true, check[1])
     } catch (error) {
         return responseHandler(res, error, 400, false)
     }

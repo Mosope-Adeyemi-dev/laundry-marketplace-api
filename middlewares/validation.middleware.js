@@ -3,7 +3,7 @@ exports.validationMiddleware = (schema) => {
     const validationOptions = {
       abortEarly: false,
       allowUnknown: false,
-      stripUnkown: true,
+      stripUnknown: true,
     };
 
     try {
@@ -11,9 +11,10 @@ exports.validationMiddleware = (schema) => {
       req.body = value;
       next();
     } catch (err) {
+      // console.error(err)
       const errors = [];
       err.details.forEach((error) => {
-        errors.push(error.message);
+        errors.push(error.message.replace(/"/g, ''));
       });
       res.status(400).send({
         success: false,
