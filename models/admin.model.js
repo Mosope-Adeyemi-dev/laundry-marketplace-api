@@ -16,7 +16,7 @@ const adminSchema = Schema({
     profilePhoto: { type: String },
     password: { type: String },
     status: { type: Boolean, default: true, required: true },
-    invitationAccepted: { type: Boolean, default: false }
+    invitationAccepted: { type: Boolean, default: false },
 }, {timestamp: true})
 
 adminSchema.methods.isValidPassword = async function (password) {

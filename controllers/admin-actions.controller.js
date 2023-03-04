@@ -1,4 +1,4 @@
-const { getAllMerchants, changeMerchantStatus } = require("../services/admin.services")
+const { getAllMerchants, changeMerchantStatus, getMerchantInfoById, approveMerchant } = require("../services/admin.services")
 const { responseHandler } = require('../utils/responseHandler')
 
 const listMerchants = async (req, res) => {
@@ -27,7 +27,36 @@ const updateMerchantStatus =  async (req, res) => {
         return responseHandler(res, error, 400, false, null)
     }
 }
+
+const getMerchantInfo = async (req, res) => {
+    try {
+        const { merchantId } = req.params
+        if(merchantId == '') return responseHandler(res, "Error - Include valid merchant id")
+        const check = await getMerchantInfoById(merchantId)
+        if(!check[0]) return responseHandler(res, check[1], 400, false, null)
+
+        return responseHandler(res, 'Merchant retrieved successfully.', 200, true,{ merchant: check[1] })
+    } catch (error) {
+        return responseHandler(res, error, 400, false, null)
+    }
+}
+
+const approveMerchantAccount = async (req, res) => {
+    try {
+        const { merchantId } = req.body
+        const check = await approveMerchant(req.user, merchantId)
+
+        if(!check[0]) return responseHandler(res, check[1], 400, false, null)
+
+        return responseHandler(res, check[1], 200, true, null)
+    } catch (error) {
+        return responseHandler(res, error, 400, false, null)
+    }
+}
+
 module.exports = {
     listMerchants,
-    updateMerchantStatus
+    updateMerchantStatus,
+    getMerchantInfo,
+    approveMerchantAccount,
 }

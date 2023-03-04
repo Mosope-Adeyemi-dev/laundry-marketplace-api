@@ -3,6 +3,8 @@ const bcrypt = require('bcrypt')
 const { translateError } = require('../utils/mongo_helper')
 const generateOtp = require('../utils/otp')
 const { createToken } = require('../utils/token')
+const serviceModel = require('../models/service.model')
+const { default: mongoose } = require('mongoose')
 
 const registerMerchant = async (body) => {
     try {
@@ -25,6 +27,22 @@ const registerMerchant = async (body) => {
     } catch (error) {
         console.log(error)
         return [false, translateError(error) || "Unable to register merchant"]
+    }
+}
+
+const authenticateMerchant =  async (email, password)=> {
+    try {
+        const result = await merchantModel.findOne({email}).select('email password isApproved')
+        if(!result) return [false, "Incorrect username or password.", 400]
+
+        if(!await bcrypt.compare(password, result.password)) return [false, "Incorrect username or password", 400]
+
+        if(!result. isApproved) return [false, "You're account is still pending verification. Please contact support", 403]
+
+        return [true, await createToken(result.id)]
+    } catch (error) {
+        console.log(error)
+        return [false, translateError(error) || "Unable to login"]
     }
 }
 
@@ -75,9 +93,39 @@ const updateAvailability = async (id, status) => {
     }
 }
 
+const listNewService = async (name, merchantId, price, photo) => {
+    try {
+        const result = await serviceModel.create({
+            name,
+            price,
+            merchantId: new mongoose.Types.ObjectId(merchantId),
+            photo
+        })
+        if(!result) return [false, 'Unable to list new service']
+        console.log(result)
+        return [true]
+    } catch (error) {
+        console.log(error)
+        return [false, translateError(error) || "Unable to list new service"]
+    }
+}
+
+const getMerchantServices = async (merchantId) => {
+    try {
+        const result = await serviceModel.find({merchantId})
+        return [true, result]
+    } catch (error) {
+        console.log(error)
+        return [false, translateError(error) || "Unable get merchant services."]
+    }
+}
+
 module.exports = {
     registerMerchant,
     uploadMerchantDoc,
     setPassword,
-    updateAvailability
+    updateAvailability,
+    listNewService,
+    authenticateMerchant,
+    getMerchantServices
 }

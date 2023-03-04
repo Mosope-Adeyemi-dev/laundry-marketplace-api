@@ -7,7 +7,7 @@ const signup = async (req, res, next) => {
     try {
         const check = await createAdmin(req.body)
 
-        if(check[0] == false) return responseHandler(res, check[1], 400, false, '')
+        if(check[0] == false) return responseHandler(res, check[1], 400, false, null)
 
         return responseHandler(res, 'Admin created successfully, proceed to login.', 201, true, null)
     } catch (error) {
@@ -20,7 +20,7 @@ const login = async (req, res) => {
         const { email, password } = req.body
         const check = await authenticateAdmin(password, email)
 
-        if(check[0] == false) return responseHandler(res, check[1], 400, false, '')
+        if(check[0] == false) return responseHandler(res, check[1], 400, false, null)
         // const { user, token} = check[1]
 
         return responseHandler(res, 'Login successful', 200, true, check[1])

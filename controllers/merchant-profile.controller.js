@@ -1,4 +1,4 @@
-const { uploadMerchantDoc, updateAvailability } = require("../services/merchant.service")
+const { uploadMerchantDoc, updateAvailability, listNewService, getMerchantServices } = require("../services/merchant.service")
 const { responseHandler } = require('../utils/responseHandler')
 const formidable = require("formidable")
 const cloudinaryUpload = require("../utils/cloudinary")
@@ -60,7 +60,58 @@ const updateAvailabilityStatus = async(req, res) => {
     }
 }
 
+const registerNewService = async (req, res) => {
+    try {
+        const form = formidable({ multiples: true });
+
+        form.parse(req, async (err, fields, files) => {
+            if (err) {
+                return responseHandler(res, "Error - Upload required photo", 400, false, null)
+            }
+            const { photo } = files
+            const { name, price } = fields
+            if(!name || !price) return responseHandler(res, "Error - Include valid fields", 400, false, null)
+            if(!photo) return responseHandler(res, "Error - Upload required photo", 400, false, null)
+
+            let photoUrl;
+
+            await cloudinaryUpload(photo.filepath).then((downloadURL) => {
+                photoUrl = downloadURL;
+              })
+              .catch((error) => {
+                console.error(error);
+            });
+
+            if(!photoUrl) return responseHandler(res, "Upload failed, try again.", 400, false, null)
+
+            const check = await listNewService(name, req.user, price, photoUrl)
+
+            if(!check[0]) return responseHandler(res, check[1], 400, false, null)
+
+            return responseHandler(res, 'Service added successfully', 201, true, null)
+        });
+    } catch (error) {
+        console.error(error)
+        return responseHandler(res, error, 400, false, null)
+    }
+}
+
+const listServices = async (req, res) => {
+    try {
+        const check = await getMerchantServices(req.user)
+
+        if(!check[0]) return responseHandler(res, check[1], 400, false, null)
+
+        return responseHandler(res, 'Services retrieved successfully', 200, true, check[1])
+    } catch (error) {
+        console.error(error)
+        return responseHandler(res, error, 400, false, null)
+    }
+}
+
 module.exports = {
     uploadDocuments,
-    updateAvailabilityStatus
+    updateAvailabilityStatus,
+    registerNewService,
+    listServices
 }

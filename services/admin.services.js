@@ -54,6 +54,8 @@ const authenticateAdmin = async (password, email) => {
     try {
         const user = await adminModel.findOne({email}).select("email firstname lastname role password")
 
+        if(!user) return [false, "Incorrect username or password"]
+
         if(!await bcrypt.compare(password, user.password)) return [false, 'Incorrect username or password.']
 
         const token = await createToken(user.id)
@@ -125,6 +127,33 @@ const changeMerchantStatus = async (merchantId, isActive) => {
     }
 }
 
+const getMerchantInfoById = async (id) => {
+    try {
+        const merchant = await merchantModel.findById(id, { password: false, })
+        if(!merchant) return [false, "Unable to retrieve merchant."]
+        console.log(merchant)
+        return [true, merchant]
+    } catch (error) {
+        console.log(error)
+        return [false, translateError(error) || 'Unable to retrieve merchant.']
+    }
+}
+
+const approveMerchant = async (id, merchantId) => {
+    try {
+        const merchant = await merchantModel.findByIdAndUpdate(merchantId, 
+            {approvedBy: id, isApproved: true, approvalDate: Date.now()}, 
+            {new: true})
+        console.log(merchant)
+        if(!merchant) return [false, "Unable to approve merchant account"]
+
+        return [true, "Merchant account approved!"]
+    } catch (error) {
+        return [false, translateError(error) || 'Unable to approve merchant account']
+    }
+}
+
+
 module.exports = {
     createAdmin,
     inviteNewAdmin,
@@ -132,5 +161,7 @@ module.exports = {
     updateInvitedAdmin,
     retrieveAllAdmins,
     getAllMerchants,
-    changeMerchantStatus
+    changeMerchantStatus,
+    getMerchantInfoById,
+    approveMerchant
 }

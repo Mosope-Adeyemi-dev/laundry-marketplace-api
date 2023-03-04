@@ -32,10 +32,15 @@ const v_merchantStatus = Joi.object({
     merchantId: Joi.string().required()
 })
 
+const v_approveMerchant = Joi.object({
+    merchantId: Joi.string().required()
+})
+
 module.exports = {
     v_createAdmin,
     v_inviteAdmin,
     v_loginAdmin,
     v_acceptInvite,
-    v_merchantStatus
+    v_merchantStatus,
+    v_approveMerchant
 }

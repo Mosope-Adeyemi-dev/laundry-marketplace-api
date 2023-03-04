@@ -10,6 +10,6 @@ exports.responseHandler = (
     success,
     message,
   }
-  data != null ? response.data = data : ''
+  data != null || undefined ? response.data = data : ''
   res.status(statusCode).json(response);
 };
