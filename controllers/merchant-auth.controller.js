@@ -33,7 +33,7 @@ const login = async (req, res) => {
 
         if(check[0] == false) return responseHandler(res, check[1], check[2], false, null)
 
-        return responseHandler(res, 'Login successful', 200, true, check[1])
+        return responseHandler(res, 'Login successful', 200, true, { token: check[1] })
     } catch (error) {
         return responseHandler(res, error, 400, false)
     }

@@ -24,7 +24,7 @@ const merchantSchema = Schema({
     isApproved: { type: Boolean, default: false },
     completedRegistration: { type: Boolean, default: false },
     approvedBy: { type: Schema.Types.ObjectId, ref: 'Admin' }
-}, {timestamp: true})
+}, {timestamps: true})
 
 merchantSchema.methods.isValidPassword = async function (password) {
     return await bcrypt.compare(password, this.password)

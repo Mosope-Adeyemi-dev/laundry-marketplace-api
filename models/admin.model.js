@@ -17,7 +17,7 @@ const adminSchema = Schema({
     password: { type: String },
     status: { type: Boolean, default: true, required: true },
     invitationAccepted: { type: Boolean, default: false },
-}, {timestamp: true})
+}, { timestamps: true })
 
 adminSchema.methods.isValidPassword = async function (password) {
     return await bcrypt.compare(password, this.password)

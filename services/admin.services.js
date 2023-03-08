@@ -97,7 +97,7 @@ const updateInvitedAdmin = async (firstname,lastname, email, password, token) =>
 
 const retrieveAllAdmins = async () => {
     try {
-        const admins = await adminModel.find().select("firstname lastname email role status")
+        const admins = await adminModel.find().select("firstname lastname email role status createdAt updatedAt")
         return [true, admins]
     } catch (error) {
         console.log(error)
@@ -107,7 +107,7 @@ const retrieveAllAdmins = async () => {
 
 const getAllMerchants = async () => {
     try {
-        const merchants = await merchantModel.find().select("fullName email isActive storeAddress businessName phoneNumber isApproved")
+        const merchants = await merchantModel.find().select("fullName email isActive storeAddress businessName phoneNumber isApproved createdAt")
         return [true, merchants]
     } catch (error) {
         console.log(error)

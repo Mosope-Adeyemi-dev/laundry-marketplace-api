@@ -11,6 +11,6 @@ const serviceSchema = Schema({
     },
     photo: String,
     merchantId: { type: Schema.Types.ObjectId, ref: 'Merchant' }
-}, {timestamp: true})
+}, {timestamps: true})
 
 module.exports = mongoose.model('Service', serviceSchema);

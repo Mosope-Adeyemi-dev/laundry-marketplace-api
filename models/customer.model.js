@@ -1,4 +1,4 @@
-const { Schema, default: mongoose } =require('mongoose');
+const { Schema, default: mongoose } = require('mongoose');
 const bcrypt = require('bcrypt')
 
 const cartObject = Schema({
@@ -14,7 +14,7 @@ const customerSchema = Schema({
     phoneNumber: { type: String, required: true },
     password: { type: String },
     cart: [cartObject]
-}, {timestamp: true})
+}, {timestamps: true})
 
 customerSchema.methods.isValidPassword = async function (password) {
     return await bcrypt.compare(password, this.password)
