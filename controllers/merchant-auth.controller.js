@@ -31,7 +31,7 @@ const login = async (req, res) => {
         const { email, password } = req.body
         const check = await authenticateMerchant(email, password)
 
-        if(check[0] == false) return responseHandler(res, check[1], check[2], false, null)
+        if(check[0] == false) return responseHandler(res, check[1], 400, false, null)
 
         return responseHandler(res, 'Login successful', 200, true, { token: check[1] })
     } catch (error) {
