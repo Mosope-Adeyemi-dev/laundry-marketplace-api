@@ -19,7 +19,7 @@ const verifyToken = async (req, res, next) => {
 
     if(!admin) return responseHandler(res, "Unauthorized - Admin doesn't exist", 403, false)
 
-    if(admin.role !== "super-admin") return responseHandler(res, "Unauthorized - priviledge not granted for your role.", 403, false)
+    if(admin.role !== "super-admin") return responseHandler(res, "Unauthorized - privilege not granted for your role.", 403, false)
 
     if(!admin.status) return responseHandler(res, "Unauthorized - Account disabled, contact admin.", 403, false)
 

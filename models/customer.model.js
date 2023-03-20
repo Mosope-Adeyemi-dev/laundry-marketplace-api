@@ -3,13 +3,17 @@ const bcrypt = require("bcrypt");
 
 const customerSchema = Schema(
   {
-    firstame: { type: String, trim: true },
-    lastname: { type: String, trim: true },
+    fullname: { type: String, trim: true },
     email: {
       type: String,
       unique: true,
       required: [true, "Email already exists"],
     },
+    cart: [{
+      quantity: { type: Number, required: true },
+      serviceId: { type: Schema.Types.ObjectId, ref: "Service", unique: true },
+      merchantId: { type: Schema.Types.ObjectId, ref: "Merchant" },
+    }],
     phoneNumber: { type: String, required: true },
     password: { type: String },
   },

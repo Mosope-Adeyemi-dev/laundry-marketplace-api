@@ -9,7 +9,7 @@ const checkJwt = async (jwtID) => {
 }
 
 const createToken = async (userId) => {
-    return jwt.sign({ id: userId }, process.env.JWT_KEY, {
+    return jwt.sign({ id: userId}, process.env.JWT_KEY, {
         expiresIn: "1d",
     });
 }

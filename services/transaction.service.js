@@ -1,8 +1,9 @@
 /* eslint-disable camelcase */
 const Paystack = require("paystack-api")(process.env.PAYSTACK_SECRET_KEY);
+const { getCartAmount, placeOrder } = require("../services/customer.service");
 const { translateError } = require("../utils/mongo_helper");
 const { v4: uuidv4 } = require("uuid");
-const walletModel = require("../models/wallet.model");
+const walletModel = require("../models/transaction.model");
 const merchantModel = require("../models/merchant.model");
 
 exports.storeTransaction = async (
@@ -57,31 +58,47 @@ exports.updateTransaction = async (
   return null;
 };
 
-exports.initializePaystackCheckout = async (amount, userId) => {
-  const helper = new Paystack.FeeHelper();
-  const amountPlusPaystackFees = helper.addFeesTo(amount * 100);
-  // const splitAccountFees = (1 / 100) * amount * 100;
+exports.initializePaystackCheckout = async (email, userId, body) => {
+  try {
 
-  const result = await Paystack.transaction.initialize({
-    email: this.email,
-    //If amount is less than NGN2500, waive paystack's NGN100 charge to NGN10
-    amount: amountPlusPaystackFees,
-      // amount >= 2500
-      //   ? Math.ceil(amountPlusPaystackFees + 15000 + splitAccountFees)
-      //   : Math.ceil(amountPlusPaystackFees + 1000 + splitAccountFees),
-    reference: uuidv4(),
-    currency: "NGN",
-    // subaccount: process.env.PAYSTACK_SUB_ACCT,
-  });
+    const check = await getCartAmount(userId);
+    if (!check[0]) return [false, check[1]];
 
-  if (!result) {
-    return [false, result];
+    if(check[1] == 0) return [false, "Add services to your cart to place an order"]
+    const amount = check[1];
+
+    const helper = new Paystack.FeeHelper();
+    const amountPlusPaystackFees = helper.addFeesTo(amount * 100);
+
+    const result = await Paystack.transaction.initialize({
+      email,
+      amount: amountPlusPaystackFees,
+      reference: uuidv4(),
+      currency: "NGN",
+    });
+
+    if (!result) {
+      console.log(result, "error")
+      return [false, "Payment service unavailable now. Try gain later."];
+    }
+
+    const checkOrder = await placeOrder(userId, body);
+
+    if(!checkOrder) return [false, check[1]]
+    console.log(checkOrder[1], "placed order")
+
+    console.log(result);
+
+    return [true, result];
+  } catch (error) {
+    console.log(error);
+    return [false, translateError(error) || "Unable to retrieve your orders"];
   }
 
-  const newTransaction = await wallet
-  if (newTransaction) {
-    return [true, result.data];
-  }
+  // const newTransaction = await wallet
+  // if (newTransaction) {
+  //   return [true, result.data];
+  // }
 };
 
 exports.verifyTransaction = async (reference) => {
@@ -93,15 +110,15 @@ exports.verifyTransaction = async (reference) => {
       return [false];
     }
 
-    const { paystack, subaccount } = result.data.fees_split;
-    const totalProcessingFees = paystack + subaccount;
+    // const { paystack, subaccount } = result.data.fees_split;
+    // const totalProcessingFees = paystack + subaccount;
 
-    const updatedTransaction = await updateTransaction(
-      reference,
-      result.data.status,
-      totalProcessingFees,
-      result.data.authorization
-    );
+    // const updatedTransaction = await updateTransaction(
+    //   reference,
+    //   result.data.status,
+    //   totalProcessingFees,
+    //   result.data.authorization
+    // );
 
     if (updatedTransaction) {
       return [true, updatedTransaction];
@@ -198,10 +215,12 @@ exports.validatePin = async (formPin, id) => {
 
 exports.getUserTransactions = async (id) => {
   try {
-    const transactions = await walletModel.find({
-      $or: [{ fundRecipientAccount: id }, { fundOriginatorAccount: id }],
-      // $or: [{ status: 'Success' }, { status: 'success' }],
-    }).sort({ createdAt: -1 });
+    const transactions = await walletModel
+      .find({
+        $or: [{ fundRecipientAccount: id }, { fundOriginatorAccount: id }],
+        // $or: [{ status: 'Success' }, { status: 'success' }],
+      })
+      .sort({ createdAt: -1 });
     return [true, transactions];
   } catch (error) {
     return [false, translateError(error)];

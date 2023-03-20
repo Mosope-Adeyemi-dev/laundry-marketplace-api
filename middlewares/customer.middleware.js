@@ -1,6 +1,6 @@
 const { responseHandler } = require("../utils/responseHandler");
 const { checkJwt } = require("../utils/token");
-const merchantModel = require("../models/merchant.model");
+const customerModel = require("../models/customer.model");
 
 const verifyToken = async (req, res, next) => {
   const bearerHeader = req.headers.authorization;
@@ -15,17 +15,14 @@ const verifyToken = async (req, res, next) => {
       return responseHandler(res, "Unauthorized", 403, false, "");
     }
 
-    const merchant = await merchantModel.findById(id)
+    const customer = await customerModel.findById(id)
 
-    console.log(merchant)
+    // console.log(customer)
 
-    if(!merchant) return responseHandler(res, "Unauthorized - User doesn't exist", 403, false)
+    if(!customer) return responseHandler(res, "Unauthorized - User doesn't exist", 403, false)
 
-    if(!merchant.status) return responseHandler(res, "Unauthorized - Account disabled, contact admin.", 403, false)
-
-    req.user = merchant.id
-    req.isActive = merchant.status
-    req.isApproved = merchant.isApproved
+    req.user = customer.id
+    req.email = customer.email
     
     return next()
   }

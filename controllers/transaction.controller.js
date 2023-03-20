@@ -12,28 +12,28 @@ const {
 } = require('../services/transaction.service');
 const { responseHandler } = require('../utils/responseHandler');
 
-const fundWallet = async (req, res) => {
+const paymentInitialization = async (req, res) => {
   try {
     const check = await initializePaystackCheckout(
-      req.body.amount,
-      req.id
+      req.email,
+      req.user,
+      req.body
     );
 
-    if (check[0]) {
+    if (!check[0]) {
       return responseHandler(
         res,
-        'Initialization successful',
-        200,
+        check[1],
+        400,
         false,
-        check[1]
       );
     }
 
-    return responseHandler(res, 'Initialization unsuccessful', 400, true, '');
+    return responseHandler(res, 'Initialization successful', 200, true, check[1]);
   } catch (error) {
     return responseHandler(
       res,
-      'An error occured. Try again',
+      'An error occurred. Try again',
       500,
       true,
       error
@@ -288,7 +288,7 @@ const withdrawFunds = async (req, res) => {
 };
 
 module.exports = {
-  fundWallet,
+  paymentInitialization,
   verifyTransactionStatus,
   transferFunds,
   setupTransactionPin,

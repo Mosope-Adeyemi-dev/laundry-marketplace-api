@@ -20,7 +20,7 @@ const merchantSchema = Schema({
         accountName: String
     }],
     approvalDate: { type: Date },
-    isActive: { type: Boolean, default: true },
+    status: { type: Boolean, default: true },
     isApproved: { type: Boolean, default: false },
     completedRegistration: { type: Boolean, default: false },
     approvedBy: { type: Schema.Types.ObjectId, ref: 'Admin' }

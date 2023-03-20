@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const {
-  fundWallet,
+  paymentInitialization,
   verifyTransactionStatus,
   transferFunds,
   setupTransactionPin,
@@ -11,9 +11,9 @@ const {
   verifyBankAccount,
   withdrawFunds,
 } = require('../controllers/transaction.controller');
-const verifyToken = require("../middlewares/merchant.middleware")
+const verifyToken = require("../middlewares/customer.middleware")
 
-router.post('/order/fund', verifyToken, fundWallet);
+router.post('/payment/initialize', verifyToken, paymentInitialization);
 router.get(
   '/wallet/verify-transaction',
   verifyToken,
