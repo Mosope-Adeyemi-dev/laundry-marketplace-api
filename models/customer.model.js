@@ -26,7 +26,7 @@ customerSchema.methods.isValidPassword = async function (password) {
 
 customerSchema.pre("save", async function (next) {
   try {
-    const hashedPassword = await bcrypt.hashSync(this.password, 10);
+    const hashedPassword = await bcrypt.hash(this.password, 10);
     this.password = hashedPassword;
 
     next();
