@@ -20,20 +20,20 @@ router.get(
   verifyTransactionStatus
 );
 router.post('/wallet/transfer-fund', verifyToken, transferFunds);
-router.put('/wallet/pin/set', verifyToken, setupTransactionPin);
+// router.put('/wallet/pin/set', verifyToken, setupTransactionPin);
 router.get('/wallet/balance', verifyToken, getWalletBalance);
-router.get(
-  '/wallet/transaction-history',
-  verifyToken,
-  getTransactionHistory
-);
-router.get(
-  '/wallet/transaction-history/:transactionId',
-  verifyToken,
-  getTransactionDetail
-);
-router.get('/wallet/banks', verifyToken, getBanksList);
-router.post('/wallet/bank/verify-account', verifyToken, verifyBankAccount);
-router.post('/wallet/withdraw', verifyToken, withdrawFunds);
+// router.get(
+//   '/wallet/transaction-history',
+//   verifyToken,
+//   getTransactionHistory
+// );
+// router.get(
+//   '/wallet/transaction-history/:transactionId',
+//   verifyToken,
+//   getTransactionDetail
+// );
+router.get('/payment/banks', getBanksList);
+router.post('/payment/banks/resolve-account', verifyBankAccount);
+// router.post('/wallet/withdraw', verifyToken, withdrawFunds);
 
 module.exports = router;

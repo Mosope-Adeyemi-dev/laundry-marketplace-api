@@ -203,7 +203,7 @@ exports.getCartAmount = async (id) => {
   }
 };
 
-exports.placeOrder = async (id, body) => {
+exports.placeOrder = async (id, body, paymentReference) => {
   try {
     const { deliveryType, pickUpAddress, dropOffAddress, paymentMethod } = body;
 
@@ -236,6 +236,7 @@ exports.placeOrder = async (id, body) => {
       totalPrice: cartTotal,
       customerId: id,
       cart,
+      paymentReference
     });
 
     if (!order) return [false, "Unable place order. Please try again"];

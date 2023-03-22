@@ -5,6 +5,8 @@ const generateOtp = require('../utils/otp')
 const { createToken } = require('../utils/token')
 const serviceModel = require('../models/service.model')
 const { default: mongoose } = require('mongoose')
+const orderModel = require('../models/order.model')
+const { resolveBankAccount } = require('./transaction.service')
 
 const registerMerchant = async (body) => {
     try {
@@ -35,9 +37,12 @@ const authenticateMerchant =  async (email, password)=> {
         const result = await merchantModel.findOne({email}).select('email password isApproved')
         if(!result) return [false, "Incorrect username or password.", 400]
 
+
+        if(!result.password) [false, "Setup account password"]
+        
         if(!await bcrypt.compare(password, result.password)) return [false, "Incorrect username or password", 400]
 
-        if(!result. isApproved) return [false, "You're account is still pending verification. Please contact support", 403]
+        if(!result.isApproved) return [false, "You're account is still pending verification. Please contact support", 403]
 
         return [true, await createToken(result.id)]
     } catch (error) {
@@ -120,6 +125,80 @@ const getMerchantServices = async (merchantId) => {
     }
 }
 
+const getPendingOrders = async (id) => {
+    try {
+        const orders = await orderModel.aggregate([
+            {
+                $match: {
+                    "cart.merchantId": new mongoose.Types.ObjectId(id),
+                    orderCompleted: false
+                },
+            }
+        ])
+        console.log(orders)
+
+        if(!orders) [false, 'Unable to retrieve pending orders']
+
+        return [true, orders]
+    } catch (error) {
+        console.log(error)
+        return [false, translateError(error) || "Unable to retrieve pending orders."]
+    }
+}
+const orderHistory = async (id) => {
+    try {
+        const orders = await orderModel.aggregate([
+            {
+                $match: {
+                    "cart.merchantId": new mongoose.Types.ObjectId(id),
+                    orderCompleted: true
+                },
+            }
+        ])
+        console.log(orders)
+
+        if(!orders) [false, 'Unable to retrieve order history']
+
+        return [true, orders]
+    } catch (error) {
+        console.log(error)
+        return [false, translateError(error) || "Unable to retrieve order history."]
+    }
+}
+
+const saveBankDetails = async (id, bank, bankCode, accountNumber) => {
+    try {
+        const checkBankDetails = await resolveBankAccount(accountNumber, bankCode)
+
+        if(!checkBankDetails[0]) return [false, checkBankDetails[1]]
+
+        const { account_name } = checkBankDetails[1]
+
+        const updateUser = await merchantModel.findByIdAndUpdate(id, {bankDetails: {
+            bank,
+            accountNumber,
+            accountName: account_name
+        } })
+
+        if(!updateUser) return [false, "Unable to save bank details"]
+
+        return [true, checkBankDetails[1]]
+    } catch (error) {
+        console.log(error)
+        return [false, translateError(error) || "Unable to save bank details."]
+    }
+} 
+
+const getById = async (id) => {
+    try {
+        const result = await merchantModel.findById(id).select("-password")
+        return [true, result]
+    } catch (error) {
+        console.log(error)
+        return [false, translateError(error) || "Unable get user info."]
+    }
+}
+
 module.exports = {
     registerMerchant,
     uploadMerchantDoc,
@@ -127,5 +206,9 @@ module.exports = {
     updateAvailability,
     listNewService,
     authenticateMerchant,
-    getMerchantServices
+    getMerchantServices,
+    getPendingOrders,
+    orderHistory,
+    saveBankDetails,
+    getById
 }

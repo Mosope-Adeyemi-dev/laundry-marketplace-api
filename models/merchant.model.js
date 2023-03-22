@@ -14,11 +14,11 @@ const merchantSchema = Schema({
     cacDocument: { type: String },
     password: { type: String },
     availabilityStatus: { type: Boolean },
-    bankDetails: [{
+    bankDetails: {
         bank: String,
         accountNumber: String,
         accountName: String
-    }],
+    },
     approvalDate: { type: Date },
     status: { type: Boolean, default: true },
     isApproved: { type: Boolean, default: false },

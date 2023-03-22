@@ -62,16 +62,17 @@ const retrieveCart = async (req, res) => {
 
 const placeNewOrder = async (req, res) => {
   try {
-    const check = await placeOrder(req.user, req.body);
+    const check = await placeOrder(req.user, req.body, null);
 
     if (check[0] == false) return responseHandler(res, check[1], 400, false);
 
-    return responseHandler(res, "Order placed successfully", 200, true, check[1]);
+    return responseHandler(res, "Order placed successfully", 200, true);
   } catch (error) {
     console.log(error)
     return responseHandler(res, "An error occurred", 500, false);
   }
 };
+
 // getOrdersById
 const retrieveOrders = async (req, res) => {
     try {

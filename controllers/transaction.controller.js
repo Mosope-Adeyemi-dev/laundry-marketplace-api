@@ -35,7 +35,7 @@ const paymentInitialization = async (req, res) => {
       res,
       'An error occurred. Try again',
       500,
-      true,
+      false,
       error
     );
   }
@@ -225,15 +225,15 @@ const getBanksList = async (req, res) => {
     if (check[0]) {
       return responseHandler(
         res,
-        'Bank list retrieved succesfully',
+        'Bank list retrieved successfully',
         200,
-        false,
+        true,
         check[1]
       );
     }
-    return responseHandler(res, 'Unable to retrieve bank list', 400, true, '');
+    return responseHandler(res, 'Unable to retrieve bank list', 400, false);
   } catch (error) {
-    return responseHandler(res, 'An error occured. Try again', 500, true, '');
+    return responseHandler(res, 'An error occurred. Try again', 500, false);
   }
 };
 
@@ -249,13 +249,13 @@ const verifyBankAccount = async (req, res) => {
         res,
         'Bank account details retrieved',
         200,
-        false,
+        true,
         check[1]
       );
     }
-    return responseHandler(res, check[1], 400, true, '');
+    return responseHandler(res, check[1], 400, false, '');
   } catch (error) {
-    return responseHandler(res, 'An error occured. Try again', 500, true, '');
+    return responseHandler(res, 'An error occurred. Try again', 500, false, '');
   }
 };
 

@@ -3,7 +3,7 @@ const Paystack = require("paystack-api")(process.env.PAYSTACK_SECRET_KEY);
 const { getCartAmount, placeOrder } = require("../services/customer.service");
 const { translateError } = require("../utils/mongo_helper");
 const { v4: uuidv4 } = require("uuid");
-const walletModel = require("../models/transaction.model");
+const walletModel = require("../models/wallet.model");
 const merchantModel = require("../models/merchant.model");
 
 exports.storeTransaction = async (
@@ -82,23 +82,18 @@ exports.initializePaystackCheckout = async (email, userId, body) => {
       return [false, "Payment service unavailable now. Try gain later."];
     }
 
-    const checkOrder = await placeOrder(userId, body);
+    const checkOrder = await placeOrder(userId, body, result.data.reference);
 
     if(!checkOrder) return [false, check[1]]
     console.log(checkOrder[1], "placed order")
 
     console.log(result);
 
-    return [true, result];
+    return [true, result.data];
   } catch (error) {
     console.log(error);
     return [false, translateError(error) || "Unable to retrieve your orders"];
   }
-
-  // const newTransaction = await wallet
-  // if (newTransaction) {
-  //   return [true, result.data];
-  // }
 };
 
 exports.verifyTransaction = async (reference) => {
@@ -249,7 +244,7 @@ exports.getPaystackBankLists = async () => {
     if (banks) {
       return [true, banks.data];
     }
-    return [false];
+    return [false, "Failed to retrieve bank list"];
   } catch (error) {
     return [false, error.error.message];
   }
