@@ -29,10 +29,15 @@ const v_addService = Joi.object({
     photo: Joi.binary().required()
 })
 
+const v_fulfillOrder = Joi.object({
+    orderId: Joi.string().required()
+})
+
 module.exports = {
     v_registerMerchant,
     v_setPassword,
     v_availabilityStatus,
     v_addService,
-    v_loginMerchant
+    v_loginMerchant,
+    v_fulfillOrder
 }

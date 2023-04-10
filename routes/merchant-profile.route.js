@@ -11,10 +11,11 @@ const {
   getOrderHistory,
   saveMerchantAccount,
   getUSerInfo,
+  completeOrder
 } = require("../controllers/merchant-profile.controller");
 
 //validations
-const { v_availabilityStatus } = require("../validations/merchant.validation");
+const { v_availabilityStatus, v_fulfillOrder } = require("../validations/merchant.validation");
 
 //middlewares
 const {
@@ -35,5 +36,6 @@ router.get("/merchant/orders/pending", verifyToken, pendingOrders);
 router.get('/merchant/orders/completed', verifyToken, getOrderHistory)
 router.post('/merchant/bank-details/set', verifyToken, saveMerchantAccount)
 router.get('/merchant/info', verifyToken, getUSerInfo)
+router.post('/merchant/orders/fulfill', validationMiddleware(v_fulfillOrder), verifyToken, completeOrder)
 
 module.exports = router;

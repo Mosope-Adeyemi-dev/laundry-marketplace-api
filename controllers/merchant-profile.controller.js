@@ -7,6 +7,7 @@ const {
   orderHistory,
   saveBankDetails,
   getById,
+  updateOrderStatus,
 } = require("../services/merchant.service");
 const { responseHandler } = require("../utils/responseHandler");
 const formidable = require("formidable");
@@ -90,7 +91,7 @@ const uploadDocuments = async (req, res) => {
       );
     });
   } catch (error) {
-    return responseHandler(res, error, 400, false, null);
+    return responseHandler(res, error, 500, false, null);
   }
 };
 
@@ -119,7 +120,7 @@ const updateAvailabilityStatus = async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    return responseHandler(res, error, 400, false, null);
+    return responseHandler(res, error, 500, false, null);
   }
 };
 
@@ -189,7 +190,7 @@ const registerNewService = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    return responseHandler(res, error, 400, false, null);
+    return responseHandler(res, error, 500, false, null);
   }
 };
 
@@ -208,7 +209,7 @@ const listServices = async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    return responseHandler(res, error, 400, false, null);
+    return responseHandler(res, error, 500, false, null);
   }
 };
 
@@ -227,7 +228,7 @@ const pendingOrders = async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    return responseHandler(res, error, 400, false);
+    return responseHandler(res, error, 500, false);
   }
 };
 
@@ -245,7 +246,7 @@ const getOrderHistory = async (req, res) => {
     );
   } catch (error) {
     console.error(error);
-    return responseHandler(res, error, 400, false);
+    return responseHandler(res, error, 500, false);
   }
 };
 
@@ -262,7 +263,7 @@ const saveMerchantAccount = async (req, res) => {
     return responseHandler(res, "bank details saved.", 200, true, check[1]);
   } catch (error) {
     console.error(error);
-    return responseHandler(res, error, 400, false);
+    return responseHandler(res, error, 500, false);
   }
 };
 
@@ -275,10 +276,22 @@ const getUSerInfo = async (req, res) => {
     return responseHandler(res, "details retrieved", 200, true, check[1]);
   } catch (error) {
     console.error(error);
-    return responseHandler(res, error, 400, false, null);
+    return responseHandler(res, error, 500, false, null);
   }
 };
 
+const completeOrder = async (req, res) => {
+    try {
+        const check = await updateOrderStatus(req.body.orderId);
+    
+        if (!check[0]) return responseHandler(res, check[1], 400, false);
+    
+        return responseHandler(res, "order updated successfully", 200, true, check[1]);
+      } catch (error) {
+        console.error(error);
+        return responseHandler(res, error, 500, false, null);
+      }
+} 
 module.exports = {
   uploadDocuments,
   updateAvailabilityStatus,
@@ -288,4 +301,5 @@ module.exports = {
   getOrderHistory,
   saveMerchantAccount,
   getUSerInfo,
+  completeOrder
 };

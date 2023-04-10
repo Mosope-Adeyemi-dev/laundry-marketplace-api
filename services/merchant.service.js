@@ -35,8 +35,8 @@ const registerMerchant = async (body) => {
 const authenticateMerchant =  async (email, password)=> {
     try {
         const result = await merchantModel.findOne({email}).select('email password isApproved')
+        
         if(!result) return [false, "Incorrect username or password.", 400]
-
 
         if(!result.password) [false, "Setup account password"]
         
@@ -199,6 +199,26 @@ const getById = async (id) => {
     }
 }
 
+const updateOrderStatus = async (orderId) => {
+    try {
+        const order = await orderModel.findById(orderId)
+
+        const updateFields = {
+            orderCompleted: true
+        }
+        if(order.paymentMethod == 'cash') updateFields.isPaid = true
+
+        const result = await orderModel.findByIdAndUpdate(orderId, updateFields, { new: true })
+
+        if(!result) return [false, "Unable to update order status"]
+
+        return [true, result]
+    } catch (error) {
+        console.log(error)
+        return [false, translateError(error) || "Unable to update order status"]
+    }
+}
+
 module.exports = {
     registerMerchant,
     uploadMerchantDoc,
@@ -210,5 +230,6 @@ module.exports = {
     getPendingOrders,
     orderHistory,
     saveBankDetails,
-    getById
+    getById,
+    updateOrderStatus
 }

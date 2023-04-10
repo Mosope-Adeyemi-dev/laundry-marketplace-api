@@ -6,6 +6,7 @@ const { createToken } = require("../utils/token");
 const { default: mongoose, Mongoose } = require("mongoose");
 const merchantModel = require("../models/merchant.model");
 const orderModel = require("../models/order.model");
+const sendEmail = require('../utils/email')
 
 exports.registerCustomer = async (body) => {
   try {
@@ -242,8 +243,10 @@ exports.placeOrder = async (id, body, paymentReference) => {
     if (!order) return [false, "Unable place order. Please try again"];
 
     // empty cart
-    const updatedUser = await customerModel.findByIdAndUpdate(id, { $set: { cart: [] } }, { new: true}).select('cart');
+    const updatedUser = await customerModel.findByIdAndUpdate(id, { $set: { cart: [] } }, { new: true}).select('cart email');
     console.log(updatedUser, 'updated user')
+
+    await sendEmail("orderConfirmation", "", updatedUser.email, order)
 
     console.log(order);
     return [true, order];

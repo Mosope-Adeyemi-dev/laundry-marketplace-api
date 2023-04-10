@@ -28,7 +28,9 @@ const orderSchema = Schema({
     merchant: { type: Schema.Types.ObjectId, ref: 'Merchant' },
     cart: {type: Object, required: true },
     customerId: { type: Schema.Types.ObjectId, ref: 'Customer', required: true },
-    paymentReference: String
+    paymentReference: String,
+    // merchantOrderCompleted: {type: Boolean, default: false},
+    // customerOrderCompleted: {type: Boolean, default: false}
 }, { timestamps: true })
 
 module.exports = mongoose.model('Order', orderSchema);
