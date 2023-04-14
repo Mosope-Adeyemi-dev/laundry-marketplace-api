@@ -17,6 +17,7 @@ const register = async (req, res) => {
 const setMerchantPassword =  async (req, res) => {
     try {
         const check = await setPassword(req.user, req.body.password)
+        // const check = await setPassword(req.body.email, req.body.password)
 
         if (check[0] == false) return responseHandler(res, check[1], 400, false, null)
 

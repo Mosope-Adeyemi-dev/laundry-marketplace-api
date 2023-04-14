@@ -53,7 +53,7 @@ const verifyTransactionStatus = async (req, res) => {
       );
     }
 
-    const check = await verifyTransaction(req.query.reference);
+    const check = await verifyTransaction(req.user, req.query.reference);
 
     if (check[0]) {
       return responseHandler(

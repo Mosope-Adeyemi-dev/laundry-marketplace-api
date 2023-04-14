@@ -3,8 +3,9 @@ const Paystack = require("paystack-api")(process.env.PAYSTACK_SECRET_KEY);
 const { getCartAmount, placeOrder } = require("../services/customer.service");
 const { translateError } = require("../utils/mongo_helper");
 const { v4: uuidv4 } = require("uuid");
-const walletModel = require("../models/wallet.model");
+const transactionModel = require("../models/transaction.model");
 const merchantModel = require("../models/merchant.model");
+const orderModel = require("../models/order.model");
 
 exports.storeTransaction = async (
   referenceId,
@@ -14,7 +15,7 @@ exports.storeTransaction = async (
   fundRecipientAccount,
   accessCode
 ) => {
-  const newTransaction = new walletModel({
+  const newTransaction = new transactionModel({
     referenceId,
     transactionType,
     operationType,
@@ -46,7 +47,7 @@ exports.updateTransaction = async (
   processingFees,
   authorization
 ) => {
-  const updatedTransaction = await walletModel.findOneAndUpdate(
+  const updatedTransaction = await transactionModel.findOneAndUpdate(
     { referenceId },
     { status, processingFees, authorization },
     { new: true }
@@ -60,11 +61,11 @@ exports.updateTransaction = async (
 
 exports.initializePaystackCheckout = async (email, userId, body) => {
   try {
-
     const check = await getCartAmount(userId);
     if (!check[0]) return [false, check[1]];
 
-    if(check[1] == 0) return [false, "Add services to your cart to place an order"]
+    if (check[1] == 0)
+      return [false, "Add services to your cart to place an order"];
     const amount = check[1];
 
     const helper = new Paystack.FeeHelper();
@@ -78,25 +79,25 @@ exports.initializePaystackCheckout = async (email, userId, body) => {
     });
 
     if (!result) {
-      console.log(result, "error")
+      console.log(result, "error");
       return [false, "Payment service unavailable now. Try gain later."];
     }
 
     const checkOrder = await placeOrder(userId, body, result.data.reference);
 
-    if(!checkOrder) return [false, check[1]]
-    console.log(checkOrder[1], "placed order")
+    if (!checkOrder) return [false, check[1]];
+    console.log(checkOrder[1], "placed order");
 
     console.log(result);
 
-    return [true, result.data];
+    return [true, { paymentInfo: result.data, orderId: checkOrder[1]._id }];
   } catch (error) {
     console.log(error);
-    return [false, translateError(error) || "Unable to retrieve your orders"];
+    return [false, "Payment service unavailable now. Try gain later."];
   }
 };
 
-exports.verifyTransaction = async (reference) => {
+exports.verifyTransaction = async (merchantId, reference) => {
   try {
     const result = await Paystack.transaction.verify({
       reference,
@@ -105,23 +106,37 @@ exports.verifyTransaction = async (reference) => {
       return [false];
     }
 
-    // const { paystack, subaccount } = result.data.fees_split;
-    // const totalProcessingFees = paystack + subaccount;
+    console.log(result);
 
-    // const updatedTransaction = await updateTransaction(
-    //   reference,
-    //   result.data.status,
-    //   totalProcessingFees,
-    //   result.data.authorization
-    // );
+    const { status, gateway_response } = result.data;
 
-    if (updatedTransaction) {
-      return [true, updatedTransaction];
+    const orderInfo = await orderModel.findOne({ paymentReference: reference });
+    
+    if (!orderInfo.isPaid) {
+      const newTransaction = await transactionModel.create({
+        transactionType: "payment",
+        fundRecipientAccount: merchantId,
+        status: "success",
+        amount: updatedOrder.totalPrice,
+        referenceId: reference
+      });
+
+      console.log(newTransaction);
     }
 
-    return [false];
+    const updatedOrder = await orderModel.findOneAndUpdate(
+      { paymentReference: reference },
+      { isPaid: true },
+      { new: true }
+    );
+    console.log(updatedOrder);
+
+    if (!updatedOrder) return [false, "Unable to update order status"];
+
+    return [true, { status: status, message: result.message }];
   } catch (error) {
-    return [false];
+    console.error(error);
+    return [false, "Unable to verify transaction"];
   }
 };
 
@@ -152,7 +167,7 @@ exports.transferFund = async (
   if (await validatePin(pin, fundOriginatorAccount)) {
     // include step to validate user balance!!!
 
-    const newTransaction = new walletModel({
+    const newTransaction = new transactionModel({
       fundRecipientAccount: foundRecipient._id,
       fundOriginatorAccount,
       amount,
@@ -176,11 +191,11 @@ exports.transferFund = async (
 
 exports.calculateWalletBalance = async (id) => {
   // Transactions were the user is a fund recipient.
-  const recipientTransactons = await walletModel.find({
+  const recipientTransactons = await transactionModel.find({
     fundRecipientAccount: id,
   });
   //Transactions where user is fund originator
-  const originatorTransactions = await walletModel.find({
+  const originatorTransactions = await transactionModel.find({
     fundOriginatorAccount: id,
   });
 
@@ -210,7 +225,7 @@ exports.validatePin = async (formPin, id) => {
 
 exports.getUserTransactions = async (id) => {
   try {
-    const transactions = await walletModel
+    const transactions = await transactionModel
       .find({
         $or: [{ fundRecipientAccount: id }, { fundOriginatorAccount: id }],
         // $or: [{ status: 'Success' }, { status: 'success' }],
@@ -224,7 +239,7 @@ exports.getUserTransactions = async (id) => {
 
 exports.getTransaction = async (transactionId) => {
   try {
-    const transaction = await walletModel.findById(transactionId);
+    const transaction = await transactionModel.findById(transactionId);
     if (transaction) {
       return [true, transaction];
     }
@@ -324,7 +339,7 @@ exports.initializeTransfer = async (
       });
       if (withdrawRequest) {
         //Create trasaction record on DB
-        const newTransaction = new walletModel({
+        const newTransaction = new transactionModel({
           transactionType: "Withdrawal",
           referenceId: withdrawRequest.data.reference,
           operationType: "Debit",

@@ -259,7 +259,15 @@ exports.placeOrder = async (id, body, paymentReference) => {
 
 exports.getOrdersById = async (id) =>  {
     try {
-        const orders = await orderModel.find({customerId: id})
+        const orders = await orderModel.aggregate([
+          {
+            $match: {
+              customerId: new mongoose.Types.ObjectId(id),
+              // orderCompleted: false,
+              $or: [{ paymentMethod: { $ne: "online" } }, { isPaid: true }],
+            },
+          },
+        ])
 
         if(!orders) return [false, "Unable to retrieve your orders"]
 

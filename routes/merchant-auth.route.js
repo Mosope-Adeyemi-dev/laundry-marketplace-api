@@ -14,5 +14,6 @@ const verifyToken = require("../middlewares/merchant.middleware")
 router.post('/auth/merchant/register', validationMiddleware(v_registerMerchant), register)
 router.post('/auth/merchant/login', validationMiddleware(v_loginMerchant), login)
 router.put('/auth/merchant/set-password', validationMiddleware(v_setPassword), verifyToken, setMerchantPassword)
+// router.put('/auth/merchant/set-password', setMerchantPassword)
 
 module.exports = router

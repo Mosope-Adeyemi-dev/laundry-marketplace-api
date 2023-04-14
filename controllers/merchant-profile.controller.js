@@ -8,6 +8,7 @@ const {
   saveBankDetails,
   getById,
   updateOrderStatus,
+  calculateSalesBalance,
 } = require("../services/merchant.service");
 const { responseHandler } = require("../utils/responseHandler");
 const formidable = require("formidable");
@@ -281,17 +282,43 @@ const getUSerInfo = async (req, res) => {
 };
 
 const completeOrder = async (req, res) => {
-    try {
-        const check = await updateOrderStatus(req.body.orderId);
-    
-        if (!check[0]) return responseHandler(res, check[1], 400, false);
-    
-        return responseHandler(res, "order updated successfully", 200, true, check[1]);
-      } catch (error) {
-        console.error(error);
-        return responseHandler(res, error, 500, false, null);
-      }
-} 
+  try {
+    const check = await updateOrderStatus(req.body.orderId);
+
+    if (!check[0]) return responseHandler(res, check[1], 400, false);
+
+    return responseHandler(
+      res,
+      "order updated successfully",
+      200,
+      true,
+      check[1]
+    );
+  } catch (error) {
+    console.error(error);
+    return responseHandler(res, error, 500, false);
+  }
+};
+
+const calculateSalesTotal = async (req, res) => {
+  try {
+    const check = await calculateSalesBalance(req.user);
+
+    if (!check[0]) return responseHandler(res, check[1], 400, false);
+
+    return responseHandler(
+      res,
+      "Sales total retrieved",
+      200,
+      true,
+      check[1]
+    );
+  } catch (error) {
+    console.error(error);
+    return responseHandler(res, error, 500, false);
+  }
+};
+
 module.exports = {
   uploadDocuments,
   updateAvailabilityStatus,
@@ -301,5 +328,6 @@ module.exports = {
   getOrderHistory,
   saveMerchantAccount,
   getUSerInfo,
-  completeOrder
+  completeOrder,
+  calculateSalesTotal,
 };

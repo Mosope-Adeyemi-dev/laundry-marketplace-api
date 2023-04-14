@@ -23,12 +23,13 @@ const merchantSchema = Schema({
     status: { type: Boolean, default: true },
     isApproved: { type: Boolean, default: false },
     completedRegistration: { type: Boolean, default: false },
-    approvedBy: { type: Schema.Types.ObjectId, ref: 'Admin' }
+    approvedBy: { type: Schema.Types.ObjectId, ref: 'Admin' },
+    amountWithdrawn: { type: Number, default: 0 }
 }, {timestamps: true})
 
-merchantSchema.methods.isValidPassword = async function (password) {
-    return await bcrypt.compare(password, this.password)
-}
+// merchantSchema.methods.isValidPassword = async function (password) {
+//     return await bcrypt.compare(password, this.password)
+// }
 
 
 module.exports = mongoose.model('Merchant', merchantSchema);

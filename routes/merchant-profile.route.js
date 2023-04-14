@@ -11,7 +11,8 @@ const {
   getOrderHistory,
   saveMerchantAccount,
   getUSerInfo,
-  completeOrder
+  completeOrder,
+  calculateSalesTotal
 } = require("../controllers/merchant-profile.controller");
 
 //validations
@@ -37,5 +38,6 @@ router.get('/merchant/orders/completed', verifyToken, getOrderHistory)
 router.post('/merchant/bank-details/set', verifyToken, saveMerchantAccount)
 router.get('/merchant/info', verifyToken, getUSerInfo)
 router.post('/merchant/orders/fulfill', validationMiddleware(v_fulfillOrder), verifyToken, completeOrder)
+router.get('/merchant/orders/sales/balance', verifyToken, calculateSalesTotal)
 
 module.exports = router;

@@ -2,17 +2,17 @@ const mongoose = require('mongoose');
 const { ObjectId } = mongoose.Schema.Types;
 const { Schema } = mongoose;
 
-const WalletSchema = new Schema(
+const TransactionSchema = new Schema(
   {
     transactionType: {
       type: String,
       trim: true,
-      enum: ['Payment', 'Withdrawal'],
+      enum: ['payment', 'withdrawal'],
       required: true,
     },
-    accessCode: { type: String },
-    fundRecipientAccount: { type: ObjectId, ref: 'User' },
-    fundOriginatorAccount: { type: ObjectId, ref: 'User' },
+    // accessCode: { type: String },
+    fundRecipientAccount: { type: ObjectId, ref: 'Merchant' },
+    fundOriginatorAccount: { type: ObjectId, ref: 'Merchant' },
     status: {
       type: String,
       trim: true,
@@ -24,13 +24,12 @@ const WalletSchema = new Schema(
       type: Number,
       required: true,
     },
-    referenceId: { type: String, unique: true, required: true },
-    bankDetails: { type: Object },
+    referenceId: { type: String },
   },
   {
     timestamps: true,
   }
 );
 
-const Wallet = mongoose.model('wallet', WalletSchema);
-module.exports = Wallet;
+const Transaction = mongoose.model('transaction', TransactionSchema);
+module.exports = Transaction;
