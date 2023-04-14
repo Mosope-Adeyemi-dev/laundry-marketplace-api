@@ -7,6 +7,7 @@ const serviceModel = require("../models/service.model");
 const { default: mongoose } = require("mongoose");
 const orderModel = require("../models/order.model");
 const { resolveBankAccount } = require("./transaction.service");
+const transactionModel = require("../models/transaction.model")
 
 const registerMerchant = async (body) => {
   try {
@@ -269,13 +270,12 @@ const updateOrderStatus = async (orderId) => {
 
     if (!result) return [false, "Unable to update order status"];
 
-    if (!order.isPaid) {
+    if (!order.orderCompleted) {
         const newTransaction = await transactionModel.create({
           transactionType: "payment",
-          fundRecipientAccount: updatedOrder.customerId,
+          fundRecipientAccount: result.cart[0].merchantId,
           status: "success",
-          amount: updatedOrder.totalPrice,
-          referenceId: reference
+          amount: result.totalPrice
         });
   
         console.log(newTransaction);

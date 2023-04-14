@@ -6,58 +6,7 @@ const { v4: uuidv4 } = require("uuid");
 const transactionModel = require("../models/transaction.model");
 const merchantModel = require("../models/merchant.model");
 const orderModel = require("../models/order.model");
-
-exports.storeTransaction = async (
-  referenceId,
-  transactionType,
-  operationType,
-  amount,
-  fundRecipientAccount,
-  accessCode
-) => {
-  const newTransaction = new transactionModel({
-    referenceId,
-    transactionType,
-    operationType,
-    amount,
-    fundRecipientAccount,
-    accessCode,
-  });
-
-  if (await newTransaction.save()) {
-    return [true, newTransaction];
-  }
-  return [false];
-};
-
-exports.setPin = async (pin) => {
-  const updatedUser = await merchantModel
-    .findOneAndUpdate({ email: this.email }, { pin }, { new: true })
-    .select("pin");
-
-  if (updatedUser) {
-    return [true, updatedUser];
-  }
-  return [false];
-};
-
-exports.updateTransaction = async (
-  referenceId,
-  status,
-  processingFees,
-  authorization
-) => {
-  const updatedTransaction = await transactionModel.findOneAndUpdate(
-    { referenceId },
-    { status, processingFees, authorization },
-    { new: true }
-  );
-
-  if (updatedTransaction) {
-    return updatedTransaction;
-  }
-  return null;
-};
+const { default: mongoose } = require("mongoose");
 
 exports.initializePaystackCheckout = async (email, userId, body) => {
   try {
@@ -97,7 +46,7 @@ exports.initializePaystackCheckout = async (email, userId, body) => {
   }
 };
 
-exports.verifyTransaction = async (merchantId, reference) => {
+exports.verifyTransaction = async (reference) => {
   try {
     const result = await Paystack.transaction.verify({
       reference,
@@ -115,9 +64,9 @@ exports.verifyTransaction = async (merchantId, reference) => {
     if (!orderInfo.isPaid) {
       const newTransaction = await transactionModel.create({
         transactionType: "payment",
-        fundRecipientAccount: merchantId,
+        fundRecipientAccount: orderInfo.cart[0].merchantId,
         status: "success",
-        amount: updatedOrder.totalPrice,
+        amount: orderInfo.totalPrice,
         referenceId: reference
       });
 
@@ -140,88 +89,49 @@ exports.verifyTransaction = async (merchantId, reference) => {
   }
 };
 
-exports.transferFund = async (
-  pin,
-  amount,
-  fundRecipientAccountTag,
-  comment,
-  fundOriginatorAccount,
-  senderTag
-) => {
-  const foundRecipient = await merchantModel
-    .findOne({
-      username: fundRecipientAccountTag,
-    })
-    .select("username");
-  if (!foundRecipient) {
-    return [false, "Invalid recipient account"];
-  }
-
-  if (
-    (await this.calculateWalletBalance(fundOriginatorAccount)) <=
-    Number(amount) + 100
-  ) {
-    return [false, "Error - Insufficient funds"];
-  }
-
-  if (await validatePin(pin, fundOriginatorAccount)) {
-    // include step to validate user balance!!!
-
-    const newTransaction = new transactionModel({
-      fundRecipientAccount: foundRecipient._id,
-      fundOriginatorAccount,
-      amount,
-      operationType: "Debit",
-      transactionType: "Transfer",
-      status: "Success",
-      referenceId: uuidv4(),
-      comment,
-      recepientTag: fundRecipientAccountTag,
-      senderTag,
-    });
-
-    if (await newTransaction.save()) {
-      return [true, newTransaction];
-    }
-    return [false, "Error - Unable to process transfer"];
-  } else {
-    return [false, "Error - Incorrect transaction pin"];
-  }
-};
 
 exports.calculateWalletBalance = async (id) => {
-  // Transactions were the user is a fund recipient.
-  const recipientTransactons = await transactionModel.find({
-    fundRecipientAccount: id,
-  });
+  try {
+      // Transactions were the user is a fund recipient.
+  const creditTransactions = await transactionModel.aggregate([
+    {
+      $match: { fundRecipientAccount: new mongoose.Types.ObjectId(id) }
+    },
+    {
+      $group: {
+        _id: null,
+        totalCredits: { $sum: "$amount"}
+      }
+    }
+  ])
   //Transactions where user is fund originator
-  const originatorTransactions = await transactionModel.find({
-    fundOriginatorAccount: id,
-  });
+  const debitTransactions = await transactionModel.aggregate([
+    {
+      $match: { fundOriginatorAccount: new mongoose.Types.ObjectId(id) }
+    },
+    {
+      $group: {
+        _id: null,
+        totalDebits: { $sum: "$amount"}
+      }
+    }
+  ])
 
-  let totalCredits = 0.0;
-  let totalDebits = 0.0;
+  console.log(creditTransactions, debitTransactions)
 
-  if (recipientTransactons && originatorTransactions) {
-    recipientTransactons.forEach((transaction) => {
-      if (transaction.status === "success" || transaction.status === "Success")
-        totalCredits = totalCredits + transaction.amount;
-    });
-    originatorTransactions.forEach((transaction) => {
-      if (transaction.status === "success" || transaction.status === "Success")
-        totalDebits = totalDebits + transaction.amount;
-    });
+  let totalCredits = creditTransactions[0]?.totalCredits || 0;
+  let totalDebits = debitTransactions[0]?.totalDebits || 0;
+
+  console.log(totalCredits, totalDebits)
+
+  return [true, totalCredits - totalDebits];
+
+  } catch (error) {
+    console.error(error);
+    return [false, "Unable to retrieve wallet balance"];
   }
-  return totalCredits - totalDebits;
 };
 
-exports.validatePin = async (formPin, id) => {
-  const foundUser = await merchantModel.findById(id).select("pin");
-  if (foundUser.pin === formPin) {
-    return true;
-  }
-  return false;
-};
 
 exports.getUserTransactions = async (id) => {
   try {

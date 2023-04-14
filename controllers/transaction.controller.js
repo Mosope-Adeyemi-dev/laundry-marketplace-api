@@ -53,7 +53,7 @@ const verifyTransactionStatus = async (req, res) => {
       );
     }
 
-    const check = await verifyTransaction(req.user, req.query.reference);
+    const check = await verifyTransaction(req.query.reference);
 
     if (check[0]) {
       return responseHandler(
@@ -145,11 +145,13 @@ const setupTransactionPin = async (req, res) => {
 
 const getWalletBalance = async (req, res) => {
   try {
-    const balance = await calculateWalletBalance(req.id);
+    const check = await calculateWalletBalance(req.user);
 
-    return responseHandler(res, 'Wallet balance retrieved', 200, false, {
-      balance,
-      note: balance === 0 ? 'This user is broke lmao 👀' : null,
+
+    if(!check[0]) return responseHandler(res, check[1], 400, false)
+
+    return responseHandler(res, 'Wallet balance retrieved', 200, true, {
+      balance: check[1]
     });
   } catch (error) {
     return responseHandler(
