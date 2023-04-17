@@ -15,7 +15,7 @@ exports.retrievePopularServices = async (req, res) => {
 
 exports.findServices = async (req, res) => {
     try {
-        if(req.query.serviceName == undefined) responseHandler(res, "invalid request. include required parameters", 400)
+        if(req.query.serviceName == undefined || req.query.serviceName == "") return responseHandler(res, "invalid request. include required parameters", 400)
         console.log(req.query.serviceName)
 
         const check = await searchForService(req.query.serviceName)

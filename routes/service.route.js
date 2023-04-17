@@ -14,3 +14,5 @@ const { retrievePopularServices, findServices } = require('../controllers/servic
 router.get("/services/popular", retrievePopularServices)
 router.get("/services/search", findServices)
 module.exports = router
+
+// get merchant info by id from customer
