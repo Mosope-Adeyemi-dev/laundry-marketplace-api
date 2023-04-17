@@ -277,3 +277,43 @@ exports.getOrdersById = async (id) =>  {
     return [false, translateError(error) || "Unable to retrieve your orders"];
     }
 }
+
+exports.getMerchantServiceInfo = async (merchantId) => {
+  try {
+    const result = await merchantModel.aggregate([
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(merchantId),
+        }
+      },
+      {
+        $lookup: {
+          from: "services",
+          localField: "_id",
+          foreignField: "merchantId",
+          as: "merchantServices"
+        }
+      },
+      {
+        $project: {
+          status: 0,
+          isApproved: 0,
+          completedRegistration: 0,
+          createdAt: 0,
+          updatedAt: 0,
+          approvalDate: 0,
+          approvedBy: 0,
+          bankDetails: 0,
+          password: 0,
+        }
+      }
+    ])
+
+    if(!result) return [false, "Unable to retrieve merchant info"]
+
+    return [true, result]
+  } catch (error) {
+    console.log(error);
+    return [false, translateError(error) || "Unable to retrieve merchant info"];
+  }
+}

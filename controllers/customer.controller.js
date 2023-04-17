@@ -5,6 +5,7 @@ const {
   getCart,
   placeOrder,
   getOrdersById,
+  getMerchantServiceInfo
 } = require("../services/customer.service");
 const { responseHandler } = require("../utils/responseHandler");
 const formidable = require("formidable");
@@ -60,6 +61,20 @@ const retrieveCart = async (req, res) => {
   }
 };
 
+const getMerchantInfo = async (req, res) => {
+  try {
+    if(req.params.merchantId == undefined || req.params.merchantId == "") return responseHandler(res, "invalid request. include required parameters", 400)
+        console.log(req.params.merchantId)
+    const check = await getMerchantServiceInfo(req.params.merchantId);
+
+    if (check[0] == false) return responseHandler(res, check[1], 400, false);
+
+    return responseHandler(res, "Info retrieved successfully", 200, true, check[1]);
+  } catch (error) {
+    return responseHandler(res, "An error occurred", 500, false);
+  }
+};
+
 const placeNewOrder = async (req, res) => {
   try {
     const check = await placeOrder(req.user, req.body, null);
@@ -94,4 +109,5 @@ module.exports = {
   retrieveCart,
   placeNewOrder,
   retrieveOrders,
+  getMerchantInfo
 };

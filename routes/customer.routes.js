@@ -8,6 +8,7 @@ const {
   retrieveCart,
   placeNewOrder,
   retrieveOrders,
+  getMerchantInfo
 } = require("../controllers/customer.controller");
 const {
   paymentInitialization,
@@ -44,5 +45,6 @@ router.post(
 );
 router.get("/customer/order/list", verifyToken, retrieveOrders);
 router.post("/customer/order/payment", verifyToken, validationMiddleware(v_placeOrder), paymentInitialization);
+router.get("/customer/merchant/:merchantId/info", getMerchantInfo)
 
 module.exports = router;
