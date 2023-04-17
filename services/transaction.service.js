@@ -60,14 +60,14 @@ exports.verifyTransaction = async (reference) => {
     const { status, gateway_response } = result.data;
 
     const orderInfo = await orderModel.findOne({ paymentReference: reference });
-    
+
     if (!orderInfo.isPaid) {
       const newTransaction = await transactionModel.create({
         transactionType: "payment",
         fundRecipientAccount: orderInfo.cart[0].merchantId,
         status: "success",
         amount: orderInfo.totalPrice,
-        referenceId: reference
+        referenceId: reference,
       });
 
       console.log(newTransaction);
@@ -89,49 +89,53 @@ exports.verifyTransaction = async (reference) => {
   }
 };
 
-
 exports.calculateWalletBalance = async (id) => {
   try {
-      // Transactions were the user is a fund recipient.
-  const creditTransactions = await transactionModel.aggregate([
-    {
-      $match: { fundRecipientAccount: new mongoose.Types.ObjectId(id) }
-    },
-    {
-      $group: {
-        _id: null,
-        totalCredits: { $sum: "$amount"}
-      }
-    }
-  ])
-  //Transactions where user is fund originator
-  const debitTransactions = await transactionModel.aggregate([
-    {
-      $match: { fundOriginatorAccount: new mongoose.Types.ObjectId(id) }
-    },
-    {
-      $group: {
-        _id: null,
-        totalDebits: { $sum: "$amount"}
-      }
-    }
-  ])
+    const creditTransactions = await transactionModel.aggregate([
+      {
+        $match: {
+          fundRecipientAccount: new mongoose.Types.ObjectId(id),
+          transactionType: "payment",
+          status: "success"
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalCredits: { $sum: "$amount" },
+        },
+      },
+    ]);
 
-  console.log(creditTransactions, debitTransactions)
+    const debitTransactions = await transactionModel.aggregate([
+      {
+        $match: {
+          fundOriginatorAccount: new mongoose.Types.ObjectId(id),
+          transactionType: "withdrawal",
+          status: "success"
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalDebits: { $sum: "$amount" },
+        },
+      },
+    ]);
 
-  let totalCredits = creditTransactions[0]?.totalCredits || 0;
-  let totalDebits = debitTransactions[0]?.totalDebits || 0;
+    console.log(creditTransactions, debitTransactions);
 
-  console.log(totalCredits, totalDebits)
+    let totalCredits = creditTransactions[0]?.totalCredits || 0;
+    let totalDebits = debitTransactions[0]?.totalDebits || 0;
 
-  return [true, totalCredits - totalDebits];
+    console.log(totalCredits, totalDebits);
 
+    return [true, totalCredits - totalDebits];
   } catch (error) {
     console.error(error);
     return [false, "Unable to retrieve wallet balance"];
   }
 };
-
 
 exports.getUserTransactions = async (id) => {
   try {
@@ -211,65 +215,46 @@ exports.createTransferRecipient = async (
   }
 };
 
-exports.initializeTransfer = async (
-  amount,
-  reason,
-  fullName,
-  account_number,
-  bank_code,
-  pin,
-  userId
-) => {
+exports.initializeTransfer = async (amount, userId) => {
   try {
-    // Create transaction recipient
-    const check = await createTransferRecipient(
-      fullName,
-      account_number,
-      bank_code
-    );
+    //Validate transaction pin
+    // if (!(await validatePin(pin, userId))) {
+    //   return [false, "Error - Incorrect transaction pin"];
+    // }
 
-    //if transaction recipient is created
-    if (check[0]) {
-      //Validate transaction pin
-      if (!(await validatePin(pin, userId))) {
-        return [false, "Error - Incorrect transaction pin"];
-      }
+    const balanceCheck = await this.calculateWalletBalance(userId);
 
-      //check if user has sufficient founds
-      if ((await this.calculateWalletBalance(userId)) <= Number(amount) + 100) {
-        return [false, "Error - Insufficient funds"];
-      }
+    if (!balanceCheck[0])
+      return [false, "Wallet balance unavailable, please try again."];
 
-      //Initiate paystack transfer request
-      const withdrawRequest = await Paystack.transfer.create({
-        source: "balance",
-        amount: Number(amount) * 100 + 15 * 100, //Charge an extra 15 naira for processing fee.
-        recipient: check[1].recipient_code,
-        reason,
-      });
-      if (withdrawRequest) {
-        //Create trasaction record on DB
-        const newTransaction = new transactionModel({
-          transactionType: "Withdrawal",
-          referenceId: withdrawRequest.data.reference,
-          operationType: "Debit",
-          status: "Success",
-          processingFees: 15 * 100,
-          amount: Number(amount) + 15,
-          comment: reason,
-          fundOriginatorAccount: userId,
-          bankDetails: check[1].details,
-        });
-        if (await newTransaction.save()) {
-          return [true, newTransaction];
-          // return [true, withdrawRequest.data];
-        }
-        return [false, "Error - unable to process withdraw request"];
-      }
-    } else {
-      return [false, check[1] || "Unable to resolve account number"];
+    //check if user has sufficient founds
+    if (balanceCheck[1] <= Number(amount)) {
+      return [false, "Transaction Error - Insufficient funds"];
     }
+
+    //Initiate paystack transfer request
+    // const withdrawRequest = await Paystack.transfer.create({
+    //   source: "balance",
+    //   amount: Number(amount) * 100 + 15 * 100, //Charge an extra 15 naira for processing fee.
+    //   recipient: check[1].recipient_code,
+    //   reason,
+    // });
+    // if (withdrawRequest) {
+
+    //Create transaction record on DB
+    const newTransaction = await transactionModel.create({
+      transactionType: "withdrawal",
+      fundOriginatorAccount: userId,
+      status: "success",
+      amount: amount,
+    });
+
+    if (!newTransaction)
+      return [false, "Transaction Error - unable to process withdraw request"];
+
+    return [true, newTransaction]
   } catch (error) {
+    console.log(error)
     return [false, error.error.message || error];
   }
 };

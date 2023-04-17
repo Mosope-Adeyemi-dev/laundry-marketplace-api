@@ -14,10 +14,10 @@ const {
   completeOrder,
   calculateSalesTotal
 } = require("../controllers/merchant-profile.controller");
-const { getWalletBalance } = require("../controllers/transaction.controller")
+const { getWalletBalance, withdrawFunds } = require("../controllers/transaction.controller")
 
 //validations
-const { v_availabilityStatus, v_fulfillOrder } = require("../validations/merchant.validation");
+const { v_availabilityStatus, v_fulfillOrder, v_withdraw } = require("../validations/merchant.validation");
 
 //middlewares
 const {
@@ -41,4 +41,6 @@ router.get('/merchant/info', verifyToken, getUSerInfo)
 router.post('/merchant/orders/fulfill', validationMiddleware(v_fulfillOrder), verifyToken, completeOrder)
 router.get('/merchant/orders/sales/balance', verifyToken, calculateSalesTotal)
 router.get('/merchant/wallet/balance', verifyToken, getWalletBalance)
+router.post('/merchant/wallet/withdraw', verifyToken, validationMiddleware(v_withdraw), withdrawFunds)
+
 module.exports = router;

@@ -263,29 +263,26 @@ const verifyBankAccount = async (req, res) => {
 
 const withdrawFunds = async (req, res) => {
   try {
-    const { fullName, accountNumber, bankCode, amount, reason, pin } = req.body;
+    const { amount } = req.body;
 
     const check = await initializeTransfer(
       amount,
-      reason,
-      fullName,
-      accountNumber,
-      bankCode,
-      pin,
-      req.id
+      req.user
     );
+
     if (check[0]) {
       return responseHandler(
         res,
-        'Withdrawal request has been queued.',
+        'Withdrawal successful.',
         200,
-        false,
+        true,
         check[1]
       );
     }
-    return responseHandler(res, check[1], 400, true, '');
+    return responseHandler(res, check[1], 400, false);
   } catch (error) {
-    return responseHandler(res, 'An error occured. Try again', 500, true, '');
+    console.log(error)
+    return responseHandler(res, 'An error occurred. Try again', 500, false);
   }
 };
 

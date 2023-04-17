@@ -33,11 +33,16 @@ const v_fulfillOrder = Joi.object({
     orderId: Joi.string().required()
 })
 
+const v_withdraw = Joi.object({
+    amount: Joi.number().required()
+})
+
 module.exports = {
     v_registerMerchant,
     v_setPassword,
     v_availabilityStatus,
     v_addService,
     v_loginMerchant,
-    v_fulfillOrder
+    v_fulfillOrder,
+    v_withdraw
 }

@@ -23,7 +23,7 @@ const verifyToken = async (req, res, next) => {
 
     if(!merchant.status) return responseHandler(res, "Unauthorized - Account disabled, contact admin.", 403, false)
 
-    if(!merchant.isApproved) return responseHandler(res, "You're account is pending verification. Please contact support", 403, false)
+    if(merchant.completedRegistration && !merchant.isApproved) return responseHandler(res, "You're account is pending verification. Please contact support", 403, false)
 
     req.user = merchant.id
     req.isActive = merchant.status
